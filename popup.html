@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>YouTube Quality Selector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="popup">
+    <h3>Select Preferred YouTube Quality</h3>
+    <label for="quality">Quality:</label>
+    <select id="quality">
+      <option value="2160p">2160p (4K)</option>
+      <option value="1440p">1440p (2K)</option>
+      <option value="1080p">1080p</option>
+      <option value="720p">720p</option>
+      <option value="480p">480p</option>
+      <option value="360p">360p</option>
+      <option value="240p">240p</option>
+    </select>
+    <div class="buttons">
+      <button class="save-btn" id="save">Save</button>
+      <button class="cancel-btn" id="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
