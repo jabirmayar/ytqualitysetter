@@ -1,4 +1,4 @@
-# YouTube Quality Selector
+# Auto Quality for YouTube™
 
 This extension allows users to automatically set their preferred video quality on YouTube. Users can choose their desired quality from a list, and the extension will apply this setting to videos they watch.
 
@@ -6,7 +6,7 @@ This extension allows users to automatically set their preferred video quality o
 
 - Automatically selects and applies preferred YouTube video quality.
 - Easy-to-use popup interface for setting and saving preferences.
-- Supports various video quality options from 240p to 2160p (4K).
+- Supports various video quality options from 240p, 2160p (4K) and 8K.
 
 ## Installation
 

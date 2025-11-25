@@ -1,78 +1,130 @@
-let isQualitySettingInProgress = false;
-
-function waitForElement(selector, callback) {
-    const element = document.querySelector(selector);
-    if (element) {
-        callback(element);
-    } else {
-        setTimeout(() => waitForElement(selector, callback), 100); // Check every 100ms
+(function() {
+    /* Guard to prevent script from running multiple times in the same tab */
+    if (window.hasRunYouTubeQualitySelector) {
+        return;
     }
-}
+    window.hasRunYouTubeQualitySelector = true;
 
-function setQuality() {
-    if (isQualitySettingInProgress) return; // Prevent duplicate execution
+    const QUALITY_RANKS = {
+        'highres': 9999,
+        '4320p': 4320,
+        '2160p': 2160,
+        '1440p': 1440,
+        '1080p': 1080,
+        '720p': 720,
+        '480p': 480,
+        '360p': 360,
+        '240p': 240,
+        '144p': 144
+    };
 
-    isQualitySettingInProgress = true; // Mark setting as in progress
+    /* Parses resolution numbers from the menu text */
+    function getNumericQuality(text) {
+        const match = text.match(/(\d+)p/);
+        if (match) return parseInt(match[1]);
+        return 0;
+    }
 
-    waitForElement('video', (player) => {
-        const wasPlaying = !player.paused; // Check if the video was playing
+    /* Core logic to navigate menus and apply the best available free quality */
+    function selectBestQuality() {
+        chrome.storage.sync.get('preferredQuality', ({ preferredQuality }) => {
+            const userPref = preferredQuality || 'highres';
+            const targetRank = QUALITY_RANKS[userPref] || 1080;
 
-        waitForElement('.ytp-settings-button', (settingsButton) => {
-            settingsButton.click(); // Open the settings menu
+            const settingsBtn = document.querySelector('.ytp-settings-button');
+            if (!settingsBtn) return;
+
+            settingsBtn.click();
 
             setTimeout(() => {
-                const qualityButton = [...document.querySelectorAll('.ytp-menuitem')].find(el => el.innerText.includes('Quality'));
+                const menuItems = Array.from(document.querySelectorAll('.ytp-menuitem'));
+                const qualityMenuItem = menuItems.find(item => {
+                    const label = item.querySelector('.ytp-menuitem-label');
+                    return label && label.innerText.includes('Quality');
+                });
 
-                if (qualityButton) {
-                    qualityButton.click(); // Open the quality settings
+                if (qualityMenuItem) {
+                    qualityMenuItem.click();
 
                     setTimeout(() => {
-                        const qualityOptions = [...document.querySelectorAll('.ytp-quality-menu .ytp-menuitem[role="menuitemradio"]')];
+                        const rawOptions = Array.from(document.querySelectorAll('.ytp-quality-menu .ytp-menuitem'));
+                        
+                        if (rawOptions.length > 0) {
+                            const validOptions = rawOptions
+                                .map(opt => {
+                                    const text = opt.innerText;
+                                    return { 
+                                        element: opt, 
+                                        value: getNumericQuality(text), 
+                                        text: text,
+                                        isPremium: text.includes('Premium') || text.includes('Enhanced'),
+                                        isAuto: text.toLowerCase().includes('auto')
+                                    };
+                                })
+                                .filter(item => !item.isAuto && item.value > 0);
 
-                        if (qualityOptions.length === 0) {
-                            console.error('No quality options found');
-                            isQualitySettingInProgress = false; // Mark setting as completed
-                            return;
-                        }
-
-                        // Retrieve the user's preferred quality from storage
-                        chrome.storage.sync.get('preferredQuality', ({ preferredQuality }) => {
-                            let targetQuality = qualityOptions[qualityOptions.length - 1]; // Default to the highest available quality
-
-                            if (preferredQuality) {
-                                const preferredOption = qualityOptions.find(el => el.innerText.includes(preferredQuality));
-                                if (preferredOption) {
-                                    targetQuality = preferredOption;
+                            validOptions.sort((a, b) => {
+                                if (b.value !== a.value) {
+                                    return b.value - a.value;
                                 }
-                            }
+                                return a.isPremium - b.isPremium;
+                            });
 
-                            if (targetQuality) {
-                                targetQuality.click(); // Set the video quality
-                                console.log(`Video quality set to: ${targetQuality.innerText}`);
+                            let optionToClick = null;
+
+                            if (userPref === 'highres') {
+                                optionToClick = validOptions[0];
                             } else {
-                                console.error('Target quality option not found');
+                                const exactMatch = validOptions.find(q => q.value === targetRank && !q.isPremium);
+                                optionToClick = exactMatch || validOptions[0];
                             }
 
-                            // Close the settings menu after setting the quality
-                            settingsButton.click();
-
-                            // Resume video if it was playing before the quality change
-                            if (wasPlaying) {
-                                player.play();
+                            if (optionToClick) {
+                                const isChecked = optionToClick.element.getAttribute('aria-checked') === 'true';
+                                if (!isChecked) {
+                                    optionToClick.element.click();
+                                } else {
+                                    settingsBtn.click();
+                                }
+                                
+                                setTimeout(() => {
+                                    const menuStillOpen = document.querySelector('.ytp-popup-settings[aria-hidden="false"]');
+                                    if(menuStillOpen) settingsBtn.click();
+                                }, 100);
+                            } else {
+                                settingsBtn.click();
                             }
-
-                            isQualitySettingInProgress = false; // Mark setting as completed
-                        });
-                    }, 500); // Allow time for quality options to load
-
+                        } else {
+                            settingsBtn.click();
+                        }
+                    }, 200);
                 } else {
-                    console.error('Quality button not found in settings menu');
-                    isQualitySettingInProgress = false; // Mark setting as completed
+                    settingsBtn.click();
                 }
-            }, 500); // Allow time for the settings menu to open
+            }, 200);
         });
-    });
-}
+    }
 
-// Initialize quality setting on script load
-setQuality();
+    /* Single observer instance to handle page navigation and new video loads */
+    const observer = new MutationObserver((mutations) => {
+        if (window.location.href.includes('/watch')) {
+            const video = document.querySelector('video');
+            if (video && !video.getAttribute('data-quality-set')) {
+                video.setAttribute('data-quality-set', 'true');
+                setTimeout(selectBestQuality, 1000);
+            }
+        }
+    });
+
+    /* Safe initialization to attach the observer */
+    function init() {
+        if (!document.body) {
+            window.requestAnimationFrame(init);
+        } else {
+            observer.observe(document.body, { childList: true, subtree: true });
+            setTimeout(selectBestQuality, 2000);
+        }
+    }
+
+    init();
+})();

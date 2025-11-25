@@ -1,12 +1,10 @@
 {
     "manifest_version": 3,
-    "name": "YouTube Quality Setter",
-    "version": "1.0",
-    "description": "Enhance your YouTube viewing experience by setting your preferred video quality. Automatically choose the highest available quality or select a specific resolution with ease.",
-    "permissions": ["tabs", "scripting", "storage"],
-    "host_permissions": [
-        "https://www.youtube.com/*"
-      ],
+    "name": "Auto Quality for YouTube™",
+    "version": "2.0",
+    "description": "Automatically set your preferred YouTube video quality. Selects the highest available or specific resolution.",
+    "permissions": ["storage", "activeTab", "scripting", "tabs"],
+    "host_permissions": ["*://*.youtube.com/*"],
     "background": {
       "service_worker": "background.js"
     },
@@ -27,5 +25,4 @@
         "48": "icons/icon48.png",
         "128": "icons/icon128.png"
     }
-  }
-  
+}

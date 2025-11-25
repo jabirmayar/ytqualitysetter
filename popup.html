@@ -1,31 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>YouTube Quality Selector</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Quality Selector</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="popup">
-    <h3>Select Preferred YouTube Quality</h3>
-    <label for="quality">Quality:</label>
-    <select id="quality">
-      <option value="2160p">2160p (4K)</option>
-      <option value="1440p">1440p (2K)</option>
-      <option value="1080p">1080p</option>
-      <option value="720p">720p</option>
-      <option value="480p">480p</option>
-      <option value="360p">360p</option>
-      <option value="240p">240p</option>
-    </select>
+  <div class="container">
+    <div class="header">
+      <h2>Auto Quality</h2>
+      <span class="status-dot"></span>
+    </div>
+    
+    <div class="control-group">
+      <label for="quality">Target Resolution</label>
+      <div class="select-wrapper">
+        <select id="quality">
+          <option value="highres">Max Available (8K/4K)</option>
+          <option value="2160p">2160p (4K)</option>
+          <option value="1440p">1440p (2K)</option>
+          <option value="1080p">1080p (HD)</option>
+          <option value="720p">720p</option>
+          <option value="480p">480p</option>
+          <option value="360p">360p</option>
+          <option value="144p">144p</option>
+        </select>
+        <svg class="arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+      </div>
+    </div>
+
+    <p class="info-text">If the target isn't found, the highest available free quality will be selected.</p>
+
     <div class="buttons">
-      <button class="save-btn" id="save">Save</button>
-      <button class="cancel-btn" id="cancel">Cancel</button>
+      <button class="btn secondary" id="cancel">Close</button>
+      <button class="btn primary" id="save">Save & Apply</button>
     </div>
   </div>
-
   <script src="popup.js"></script>
 </body>
 </html>
